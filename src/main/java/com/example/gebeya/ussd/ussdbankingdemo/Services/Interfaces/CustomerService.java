@@ -14,8 +14,9 @@ public interface CustomerService {
     Customer saveCustomer(Customer customer);
     boolean updateCustomer(int cif, CustomerUpdateDTO updateDTO) throws CustomerNotFoundException;
     String deleteCustomer(int cif);
-    Account saveAccountForCustomer(int cif, Account account) throws CustomerNotFoundException;
-    List<Account> getShortStatements(int cif) throws CustomerNotFoundException;
-    Optional<Customer> getCustomerById(int cif);
-    void validateCustomer(Customer customer) throws CustomerCreationException;
-}
+
+    Account saveAccountForCustomer(int cif, Account account);
+    List<Account> getShortStatements(int cif);
+    Optional<Customer> getCustomerById(int id);
+    void validateCustomer(Customer customer);
+
