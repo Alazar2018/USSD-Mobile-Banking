@@ -1,12 +1,17 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Services.Implementations;
 
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.CustomerCreationException;
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.CustomerNotFoundException;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.CustomerUpdateDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Transaction;
 import com.example.gebeya.ussd.ussdbankingdemo.Repository.CustomerRepository;
+import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.AccountService;
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.CustomerService;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,29 +20,40 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-
+/**
+ * Service class for managing customers and related operations.
+ *
+ * This class contains methods for creating, updating, and deleting customers.
+ * It also provides methods for retrieving customer information, saving customer accounts,
+ * and performing customer validations.
+ *
+ * @author Alazar Tilahun
+ */
 @Service
 public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
     @Autowired
-    private AccountServiceImpl account;
+    private AccountService accounts;
 
     @Autowired
     private TransactionServiceImpl transaction;
 
     @Autowired
     private MobileBankingUserServiceImpl mobileBankingUser;
+    private final Logger log = LoggerFactory.getLogger(CustomerServiceImpl.class);
 
     @Override
     public List<Customer> getAllCustomers() {
+        log.info("getting all customers");
         return customerRepository.findAll();
     }
 
     @Override
     @Transactional
     public Customer saveCustomer(Customer customer) {
+        log.info("saving customer {}", customer.getCif());
         // Generate an account number starting with 1000 and having a total length of 12 digits
         String generatedAccountNumber = generateAccountNumber();
 
@@ -52,10 +68,11 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional
-    public boolean updateCustomer(int cif, CustomerUpdateDTO updateDTO) {
+    public boolean updateCustomer(int cif, CustomerUpdateDTO updateDTO) throws CustomerNotFoundException {
+        log.info("updating customer {}", cif);
         // Implementation for updateCustomer method
         Customer existingCustomer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow(() -> new CustomerNotFoundException());
 
         // Check if any updates are needed
         boolean changesMade = applyUpdates(existingCustomer, updateDTO);
@@ -68,6 +85,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private boolean applyUpdates(Customer existingCustomer, CustomerUpdateDTO updateDTO) {
+        log.info("applying updates to customer", existingCustomer.getCif());
         boolean changesMade = false;
 
         // Get all methods in CustomerUpdateDTO class
@@ -111,25 +129,27 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public String deleteCustomer(int cif) {
+        log.info("removing customer {}", cif);
         customerRepository.deleteById(cif);
         return "Customer Removed ||" + cif;
     }
 
     @Override
-    public Account saveAccountForCustomer(int cif, Account account) {
+    public Account saveAccountForCustomer(int cif, Account account) throws CustomerNotFoundException {
         // Implementation for saveAccountForCustomer method
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow(() -> new CustomerNotFoundException());
         account.setAccountNum(Integer.parseInt(customer.getAccount_number()));
         account.setCustomer(customer);
-        return account.s(account);
-    }
+        return accounts.saveAccount(account);
+        }
 
     @Override
-    public List<Account> getShortStatements(int cif) {
+    public List<Account> getShortStatements(int cif) throws CustomerNotFoundException {
+        log.info("getting short statement for customer {}", cif);
         // Implementation for getShortStatements method
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow(() -> new CustomerNotFoundException());
 
         List<Account> customerAccounts = customer.getAccounts();
 
@@ -148,7 +168,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public void validateCustomer(Customer customer) {
+    public void validateCustomer(Customer customer) throws CustomerCreationException {
         // Implementation for validateCustomer method
         if (customer == null || customer.getFirstName() == null || customer.getMiddleName() == null || customer.getLastName() == null || customer.getDob() == null || customer.getEmail() == null) {
             throw new CustomerCreationException("Customer details are incomplete");

@@ -1,5 +1,10 @@
-package com.example.gebeya.ussd.ussdbankingdemo.exceptions;
+package com.example.gebeya.ussd.ussdbankingdemo.Exceptions;
 
+/**
+ * thrown when users airtime request is invalid
+ *
+ * @author Dereje Desta
+ */
 public class InvalidAirtimeRequestException extends Throwable{
     public InvalidAirtimeRequestException() {
         this("invalid airtime request body");

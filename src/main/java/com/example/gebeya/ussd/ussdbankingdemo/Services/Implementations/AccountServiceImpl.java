@@ -1,5 +1,6 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Services.Implementations;
 
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.*;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.MobileBankingUser;
@@ -13,10 +14,11 @@ import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.HistoryServic
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.MobileBankingUserService;
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.TransactionService;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.security.auth.login.AccountNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,31 +45,38 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private HistoryService historyService;
 
+    private final Logger log = LoggerFactory.getLogger(AccountServiceImpl.class);
+
     @Override
     public List<Account> getAllAccounts() {
+        log.info("getting all account");
         return accountRepository.findAll();
     }
 
     @Override
-    public Account getAccountByNum(int accountNum) {
-        return accountRepository.findById(accountNum).orElse(null);
+    public Account getAccountByNum(int accountNum) throws AccountNotFoundException {
+        log.info("get account with account number: {}", accountNum);
+        return accountRepository.findById(accountNum).orElseThrow(() -> new AccountNotFoundException());
     }
 
 
     @Override
     public List<Account> getAllAccountsOfCustomer(Customer customer) {
+        log.info("getting all account by customer: {}", customer.getCif());
         return accountRepository.findAllByCustomerCif(customer.getCif());
     }
 
     @Override
     public Account saveAccount(Account account) {
+        log.info("saving account: {}", account.getAccountNum());
         return accountRepository.save(account);
     }
 
     @Override
-    public Account saveAccountForCustomer(int cif, Account account) {
+    public Account saveAccountForCustomer(int cif, Account account) throws CustomerNotFoundException {
+        log.info("saving account({}) for customer ({})", account.getAccountNum(), cif);
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow(() -> new CustomerNotFoundException());
         account.setAccountNum(Integer.parseInt(customer.getAccount_number()));
         account.setCustomer(customer);
         account.setCreatedAt(LocalDateTime.now());
@@ -76,7 +85,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String depositMoney(String accountNumber, BigDecimal amount) throws AccountNotFoundException {
+    public String depositMoney(String accountNumber, BigDecimal amount) throws AccountNotFoundException, MobileBankingUserNotFoundException {
+        log.info("deposit {} money to account {}", amount, accountNumber);
         Account account = accountRepository.findById(Integer.valueOf(accountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Account not found with account number: " + accountNumber));
 
@@ -103,7 +113,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException {
+    public String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, InsufficientBalanceException, TransactionNotFoundException, MobileBankingUserNotFoundException {
+        log.info("verifying deposit for account {}", accountNumber);
         // Implementation for verifyDeposit method
         // Find the merchant account
         Account merchantAccount = accountRepository.findById(accountNumber)
@@ -133,7 +144,7 @@ public class AccountServiceImpl implements AccountService {
                     if (OTP.equals(currentTransaction.getOTP())&&currentDateTime.isBefore(currentTransaction.getOtpexpireddate())&&currentTransaction.getSide()==Status.DEPOSIT) {
                         // Update customer account balance
                         if (currentTransaction.getAmount().compareTo(merchantAccount.getBalance()) > 0) {
-                            throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + merchantAccount.getAccountNum());
+                            throw new com.example.gebeya.ussd.ussdbankingdemo.Exceptions.InsufficientBalanceException("Insufficient balance for withdrawal from account: " + merchantAccount.getAccountNum());
                         }
                         BigDecimal newBalance = customerAccount.getBalance().add(currentTransaction.getAmount());
                         BigDecimal merchantNewBalance = merchantAccount.getBalance().subtract(currentTransaction.getAmount());
@@ -166,7 +177,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException {
+    public String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, TransactionNotFoundException, InsufficientBalanceException, MobileBankingUserNotFoundException {
+        log.info("verifying withdraw for account {}", accountNumber);
         // Implementation for verifyWithdraw method
         // Find the merchant account
         Account merchantAccount = accountRepository.findById(accountNumber)
@@ -196,7 +208,7 @@ public class AccountServiceImpl implements AccountService {
                     if (OTP.equals(currentTransaction.getOTP())&&currentDateTime.isBefore(currentTransaction.getOtpexpireddate())&&currentTransaction.getSide()==Status.WITHDRAW) {
                         // Update customer account balance
                         if (currentTransaction.getAmount().compareTo(customerAccount.getBalance()) > 0) {
-                            throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + customerAccountNumber);
+                            throw new com.example.gebeya.ussd.ussdbankingdemo.Exceptions.InsufficientBalanceException("Insufficient balance for withdrawal from account: " + customerAccountNumber);
                         }else {
                             BigDecimal newBalance = customerAccount.getBalance().subtract(currentTransaction.getAmount());
                             BigDecimal merchantNewBalance = merchantAccount.getBalance().add(currentTransaction.getAmount());
@@ -226,7 +238,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException {
+    public String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException, InsufficientBalanceException, MobileBankingUserNotFoundException {
+        log.info("withdrawing money from account {}", accountNumber);
         // Implementation for withdrawMoney method
         Account account = accountRepository.findById(Integer.valueOf(accountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Account not found with account number: " + accountNumber));
@@ -257,7 +270,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException {
+    public String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException, InsufficientBalanceException, MobileBankingUserNotFoundException {
+        log.info("transfer {} money from {} to {}", amount, senderAccountNumber, recieverAccountNumber);
         // Implementation for transactionMoney method
         Account senderaccount = accountRepository.findById(Integer.valueOf(senderAccountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Account not found with account number: " + senderAccountNumber));
@@ -299,6 +313,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public String updateAccount(Account account) {
+        log.info("updating account {}", account.getAccountNum());
         // Implementation for updateAccount method
         try {
             // Find the existing account
@@ -328,6 +343,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public boolean deleteAccount(int accountNum) {
+        log.info("deleting account {}", accountNum);
         // Implementation for deleteAccount method
         Optional<Account> accountOptional = accountRepository.findById(accountNum);
 
@@ -339,7 +355,8 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
-    private boolean checkCustomerUser(Account account) {
+    private boolean checkCustomerUser(Account account) throws MobileBankingUserNotFoundException {
+        log.info("check customer user {}", account.getAccountNum());
         MobileBankingUser mobileBankingUser = mobileBankingUserService.getMobileBankingUserDetailsForCustomer(account.getCustomer().getCif());
         boolean isUser = false;
 
@@ -353,7 +370,8 @@ public class AccountServiceImpl implements AccountService {
         return isUser;
     }
 
-    private boolean checkMerchantUser(Account account) {
+    private boolean checkMerchantUser(Account account) throws MobileBankingUserNotFoundException {
+        log.info("check merchant user for account {}", account.getAccountNum());
         MobileBankingUser mobileBankingUser = mobileBankingUserService.getMobileBankingUserDetailsForCustomer(account.getCustomer().getCif());
         boolean isUser = false;
 

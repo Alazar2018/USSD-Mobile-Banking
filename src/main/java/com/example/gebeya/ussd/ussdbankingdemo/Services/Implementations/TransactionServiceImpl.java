@@ -9,6 +9,8 @@ import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.TransactionSe
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -19,7 +21,20 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
-
+/**
+ * Service class for managing transactions.
+ *
+ *
+ * This service provides methods for handling various transaction operations, such as deposit,
+ * withdrawal, transfer, and retrieval of transaction details. It also interacts with the
+ * {@link TransactionRepository} and {@link HistoryService} for persistence and history tracking.
+ *
+ *
+ *
+ * @author Alazar Tilahun
+ *
+ *
+ */
 @Service
 public class TransactionServiceImpl implements TransactionService {
     @Autowired
@@ -32,15 +47,18 @@ public class TransactionServiceImpl implements TransactionService {
     }
     @PersistenceContext
     private EntityManager entityManager;
+    private final Logger log = LoggerFactory.getLogger(HistoryServiceImpl.class);
 
     @Override
     public List<Transaction> getAllTransactions() {
+        log.info("getting all transactions");
         return transactionRepository.findAll();
     }
 
     @Transactional
     @Override
     public void depositTransaction(Account account, BigDecimal amount, String otp, LocalDateTime expiredate) {
+        log.info("saving deposit {} money  transaction for account {}", amount, account.getAccountNum());
         // Implementation...
         Transaction transaction = new Transaction();
         transaction.setAccount(account);
