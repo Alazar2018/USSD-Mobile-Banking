@@ -1,7 +1,7 @@
-package com.example.gebeya.ussd.ussdbankingdemo.exceptions.handler;
+package com.example.gebeya.ussd.ussdbankingdemo.Exceptions.handler;
 
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.ExceptionDTO;
-import com.example.gebeya.ussd.ussdbankingdemo.exceptions.*;
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
