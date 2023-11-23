@@ -5,7 +5,6 @@ import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.CustomerUpdateDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Transaction;
-import com.example.gebeya.ussd.ussdbankingdemo.Repository.AccountRepository;
 import com.example.gebeya.ussd.ussdbankingdemo.Repository.CustomerRepository;
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.AccountService;
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.CustomerService;
@@ -18,7 +17,15 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-
+/**
+ * Service class for managing customers and related operations.
+ *
+ * This class contains methods for creating, updating, and deleting customers.
+ * It also provides methods for retrieving customer information, saving customer accounts,
+ * and performing customer validations.
+ *
+ * @author Alazar Tilahun
+ */
 @Service
 public class CustomerServiceImpl implements CustomerService {
     @Autowired

@@ -5,7 +5,7 @@
  *
  */
 
-package com.example.gebeya.ussd.ussdbankingdemo.controllers;
+package com.example.gebeya.ussd.ussdbankingdemo.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.ResourceBundleMessageSource;

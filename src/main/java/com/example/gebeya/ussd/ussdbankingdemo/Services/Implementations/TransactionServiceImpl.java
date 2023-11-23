@@ -19,7 +19,20 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
-
+/**
+ * Service class for managing transactions.
+ *
+ *
+ * This service provides methods for handling various transaction operations, such as deposit,
+ * withdrawal, transfer, and retrieval of transaction details. It also interacts with the
+ * {@link TransactionRepository} and {@link HistoryService} for persistence and history tracking.
+ *
+ *
+ *
+ * @author Alazar Tilahun
+ *
+ *
+ */
 @Service
 public class TransactionServiceImpl implements TransactionService {
     @Autowired
