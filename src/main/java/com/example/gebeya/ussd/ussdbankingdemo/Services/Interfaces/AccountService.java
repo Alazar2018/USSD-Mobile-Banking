@@ -1,5 +1,6 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces;
 
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.TransactionNotFoundException;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
 
@@ -14,10 +15,10 @@ public interface AccountService {
     Account saveAccount(Account account);
     Account saveAccountForCustomer(int cif, Account account);
     String depositMoney(String accountNumber, BigDecimal amount) throws AccountNotFoundException;
-    String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException;
-    String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException;
-    String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException;
-    String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException;
+    String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException, TransactionNotFoundException;
+    String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, TransactionNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException;
+    String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException;
+    String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException;
     String updateAccount(Account account);
     boolean deleteAccount(int accountNum);
 }

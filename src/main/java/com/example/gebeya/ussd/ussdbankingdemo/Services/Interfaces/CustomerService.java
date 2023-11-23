@@ -1,5 +1,6 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces;
 
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.CustomerCreationException;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.CustomerUpdateDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
@@ -15,5 +16,5 @@ public interface CustomerService {
     Account saveAccountForCustomer(int cif, Account account);
     List<Account> getShortStatements(int cif);
     Optional<Customer> getCustomerById(int cif);
-    void validateCustomer(Customer customer);
+    void validateCustomer(Customer customer) throws CustomerCreationException;
 }

@@ -28,7 +28,7 @@ public class MobileBankingUserServiceImpl implements MobileBankingUserService {
     @Transactional
     public MobileBankingUser saveMobileBankingUserForCustomer(int cif, MobileBankingUser mobileBankingUser) {
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Mobile banking user not found for customer with CIF:" + cif));
+                .orElseThrow();
         mobileBankingUser.setCustomer(customer);
         return mobileBankingUserRepository.save(mobileBankingUser);
     }
@@ -37,7 +37,7 @@ public class MobileBankingUserServiceImpl implements MobileBankingUserService {
     @Transactional
     public MobileBankingUser getMobileBankingUserDetailsForCustomer(int cif) {
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new MobileBankingUserNotFoundException("Mobile banking user not found for customer with CIF: " + cif));
+                .orElseThrow();
         MobileBankingUser mobileBankingUser = new MobileBankingUser();
         mobileBankingUser.setCustomer(customer);
         return mobileBankingUser.getCustomer().getMobileBankingUsers();
@@ -47,7 +47,7 @@ public class MobileBankingUserServiceImpl implements MobileBankingUserService {
     @Transactional
     public Account getAccountByCif(int cif, Account account) {
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow();
 
         account.setCustomer(customer);
         return account;
