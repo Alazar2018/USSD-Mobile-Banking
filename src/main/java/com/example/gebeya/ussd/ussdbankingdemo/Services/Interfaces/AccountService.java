@@ -15,10 +15,10 @@ public interface AccountService {
     Account saveAccount(Account account);
     Account saveAccountForCustomer(int cif, Account account);
     String depositMoney(String accountNumber, BigDecimal amount) throws AccountNotFoundException;
-    String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException, TransactionNotFoundException;
-    String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, TransactionNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException;
-    String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException;
-    String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException;
+    String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.Exceptions.InsufficientBalanceException, TransactionNotFoundException;
+    String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, TransactionNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.Exceptions.InsufficientBalanceException;
+    String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.Exceptions.InsufficientBalanceException;
+    String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.Exceptions.InsufficientBalanceException;
     String updateAccount(Account account);
     boolean deleteAccount(int accountNum);
 }

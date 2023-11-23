@@ -1,4 +1,4 @@
-package com.example.gebeya.ussd.ussdbankingdemo.exceptions;
+package com.example.gebeya.ussd.ussdbankingdemo.Exceptions;
 
 public class AccountNotFoundException extends ResourceNotFoundException {
     public AccountNotFoundException() {
