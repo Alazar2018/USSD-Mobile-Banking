@@ -1,10 +1,13 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Services.Implementations;
 
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.CustomerCreationException;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.CustomerUpdateDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Transaction;
+import com.example.gebeya.ussd.ussdbankingdemo.Repository.AccountRepository;
 import com.example.gebeya.ussd.ussdbankingdemo.Repository.CustomerRepository;
+import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.AccountService;
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.CustomerService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +25,7 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerRepository customerRepository;
 
     @Autowired
-    private AccountServiceImpl account;
+    private AccountService accounts;
 
     @Autowired
     private TransactionServiceImpl transaction;
@@ -55,7 +58,7 @@ public class CustomerServiceImpl implements CustomerService {
     public boolean updateCustomer(int cif, CustomerUpdateDTO updateDTO) {
         // Implementation for updateCustomer method
         Customer existingCustomer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow();
 
         // Check if any updates are needed
         boolean changesMade = applyUpdates(existingCustomer, updateDTO);
@@ -119,17 +122,17 @@ public class CustomerServiceImpl implements CustomerService {
     public Account saveAccountForCustomer(int cif, Account account) {
         // Implementation for saveAccountForCustomer method
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow();
         account.setAccountNum(Integer.parseInt(customer.getAccount_number()));
         account.setCustomer(customer);
-        return account.s(account);
-    }
+        return accounts.saveAccount(account);
+        }
 
     @Override
     public List<Account> getShortStatements(int cif) {
         // Implementation for getShortStatements method
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow();
 
         List<Account> customerAccounts = customer.getAccounts();
 
@@ -148,7 +151,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public void validateCustomer(Customer customer) {
+    public void validateCustomer(Customer customer) throws CustomerCreationException {
         // Implementation for validateCustomer method
         if (customer == null || customer.getFirstName() == null || customer.getMiddleName() == null || customer.getLastName() == null || customer.getDob() == null || customer.getEmail() == null) {
             throw new CustomerCreationException("Customer details are incomplete");

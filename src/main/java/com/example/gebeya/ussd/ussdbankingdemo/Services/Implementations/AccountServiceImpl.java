@@ -1,5 +1,6 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Services.Implementations;
 
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.TransactionNotFoundException;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.MobileBankingUser;
@@ -67,7 +68,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account saveAccountForCustomer(int cif, Account account) {
         Customer customer = customerRepository.findById(cif)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with CIF: " + cif));
+                .orElseThrow();
         account.setAccountNum(Integer.parseInt(customer.getAccount_number()));
         account.setCustomer(customer);
         account.setCreatedAt(LocalDateTime.now());
@@ -103,7 +104,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException {
+    public String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException, TransactionNotFoundException {
         // Implementation for verifyDeposit method
         // Find the merchant account
         Account merchantAccount = accountRepository.findById(accountNumber)
@@ -133,7 +134,7 @@ public class AccountServiceImpl implements AccountService {
                     if (OTP.equals(currentTransaction.getOTP())&&currentDateTime.isBefore(currentTransaction.getOtpexpireddate())&&currentTransaction.getSide()==Status.DEPOSIT) {
                         // Update customer account balance
                         if (currentTransaction.getAmount().compareTo(merchantAccount.getBalance()) > 0) {
-                            throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + merchantAccount.getAccountNum());
+                            throw new com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException("Insufficient balance for withdrawal from account: " + merchantAccount.getAccountNum());
                         }
                         BigDecimal newBalance = customerAccount.getBalance().add(currentTransaction.getAmount());
                         BigDecimal merchantNewBalance = merchantAccount.getBalance().subtract(currentTransaction.getAmount());
@@ -166,7 +167,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException {
+    public String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, TransactionNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException {
         // Implementation for verifyWithdraw method
         // Find the merchant account
         Account merchantAccount = accountRepository.findById(accountNumber)
@@ -196,7 +197,7 @@ public class AccountServiceImpl implements AccountService {
                     if (OTP.equals(currentTransaction.getOTP())&&currentDateTime.isBefore(currentTransaction.getOtpexpireddate())&&currentTransaction.getSide()==Status.WITHDRAW) {
                         // Update customer account balance
                         if (currentTransaction.getAmount().compareTo(customerAccount.getBalance()) > 0) {
-                            throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + customerAccountNumber);
+                            throw new com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException("Insufficient balance for withdrawal from account: " + customerAccountNumber);
                         }else {
                             BigDecimal newBalance = customerAccount.getBalance().subtract(currentTransaction.getAmount());
                             BigDecimal merchantNewBalance = merchantAccount.getBalance().add(currentTransaction.getAmount());
@@ -226,7 +227,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException {
+    public String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException {
         // Implementation for withdrawMoney method
         Account account = accountRepository.findById(Integer.valueOf(accountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Account not found with account number: " + accountNumber));
@@ -244,7 +245,7 @@ public class AccountServiceImpl implements AccountService {
             return "The Generated OTP is : " + otp + " This will also expire in : " + expireDate;
         }if(isMerchant&&account.getAccountStatus()!=Status.INACTIVE){
             if (amount.compareTo(account.getBalance()) > 0) {
-                throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + account);
+                throw new com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException("Insufficient balance for withdrawal from account: " + account);
             }else {
                 BigDecimal newBalance = account.getBalance().subtract(amount);
                 account.setBalance(newBalance);
@@ -257,7 +258,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException {
+    public String transactionMoney(String senderAccountNumber, String recieverAccountNumber, BigDecimal amount) throws AccountNotFoundException, com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException {
         // Implementation for transactionMoney method
         Account senderaccount = accountRepository.findById(Integer.valueOf(senderAccountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Account not found with account number: " + senderAccountNumber));
@@ -269,7 +270,7 @@ public class AccountServiceImpl implements AccountService {
             if (senderaccount.getAccountStatus() != Status.INACTIVE && recieveraccount.getAccountStatus() != Status.INACTIVE) {
                 // Update account balance
                 if (amount.compareTo(senderaccount.getBalance()) > 0) {
-                    throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + senderAccountNumber);
+                    throw new com.example.gebeya.ussd.ussdbankingdemo.exceptions.InsufficientBalanceException("Insufficient balance for withdrawal from account: " + senderAccountNumber);
                 }
                 BigDecimal newSenderBalance = senderaccount.getBalance().subtract(amount);
                 BigDecimal newRecieverBalance = recieveraccount.getBalance().add(amount);
