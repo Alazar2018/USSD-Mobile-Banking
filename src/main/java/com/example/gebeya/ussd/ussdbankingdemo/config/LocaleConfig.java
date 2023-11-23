@@ -4,7 +4,7 @@
  * This class is for supporting different languages.
  *
  */
-package com.example.gebeya.ussd.ussdbankingdemo.config;
+package com.example.gebeya.ussd.ussdbankingdemo.Config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

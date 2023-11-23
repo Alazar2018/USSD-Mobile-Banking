@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Locale;
 
 @RestController
-
+@RequestMapping("/api/v1.9/users/language")
 public class Language {
     @Autowired
     ResourceBundleMessageSource messageSource;
