@@ -14,6 +14,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+/**
+ * Service implementation class for managing mobile banking users.
+ *
+ *
+ * This class provides methods for retrieving, saving, and updating mobile banking user details.
+ * It interacts with the {@link MobileBankingUserRepository} and {@link CustomerRepository}
+ * for persistence and customer-related operations.
+ *
+ *
+ * <p>
+ * @author Alazar Tilahun
+ * </p>
+ */
 @Service
 public class MobileBankingUserServiceImpl implements MobileBankingUserService {
     @Autowired

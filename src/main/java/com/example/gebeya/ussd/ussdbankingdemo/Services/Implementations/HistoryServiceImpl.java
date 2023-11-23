@@ -16,6 +16,15 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+/**
+ * Service class for managing history-related operations.
+ *
+ * This class provides methods for retrieving, saving, and deleting history records.
+ * It also includes methods for creating and saving history records related to customer creation,
+ * transaction history, customer updates, and account updates.
+ *
+ * @author Alazar Tilahun
+ */
 @Service
 public class HistoryServiceImpl implements HistoryService {
 
