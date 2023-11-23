@@ -39,7 +39,7 @@ public class History {
 
     @ManyToOne
     @JoinColumn(name = "cif")
-    @JsonBackReference
+   // @JsonBackReference
     private Customer customer;
 
     @ManyToOne
