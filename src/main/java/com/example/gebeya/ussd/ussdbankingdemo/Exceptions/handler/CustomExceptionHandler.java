@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * handle exceptions thrown by controllers
+ *
+ * @author Dereje Desta
+ */
 @RestControllerAdvice
 public class CustomExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)

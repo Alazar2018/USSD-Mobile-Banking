@@ -6,6 +6,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
+/**
+ * generic exception response with message, status code and optional detail
+ *
+ * @author Dereje Desta
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
