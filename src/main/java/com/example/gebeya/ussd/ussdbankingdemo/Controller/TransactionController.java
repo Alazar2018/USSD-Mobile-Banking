@@ -6,9 +6,9 @@
  */
 package com.example.gebeya.ussd.ussdbankingdemo.Controller;
 
-import com.example.gebeya.ussd.ussdbankingdemo.exceptions.CustomerNotFoundException;
-import com.example.gebeya.ussd.ussdbankingdemo.exceptions.handler.*;
-import com.example.gebeya.ussd.ussdbankingdemo.exceptions.*;
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.CustomerNotFoundException;
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.handler.*;
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.*;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Customer;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Transaction;
@@ -66,13 +66,9 @@ public class TransactionController {
         public ResponseEntity<List<Transaction>> getAccountTranscation(
             @PathVariable Account account
                          ) {
-        try {
-            List<Transaction> transactions = transactionService.getByAccount(account);
-            return new ResponseEntity<>(transactions, HttpStatus.OK);
-        } catch (CustomerNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
+       List<Transaction> transactions = transactionService.getByAccount(account);
+       return new ResponseEntity<>(transactions, HttpStatus.OK);
+   }
    
     @GetMapping("/{accounts}/short-statements/{sizes}")
     public ResponseEntity<List<Transaction>> getShortStatementsPageable(
@@ -85,7 +81,7 @@ public class TransactionController {
             Slice<Transaction> transactions = transactionService.getTopNTransactionsByAccount(customerAccount, sizes);
             List<Transaction> content = transactions.getContent(); // Extracting the content
             return new ResponseEntity<>(content, HttpStatus.OK);
-        } catch (CustomerNotFoundException e) {
+        } catch (AccountNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }

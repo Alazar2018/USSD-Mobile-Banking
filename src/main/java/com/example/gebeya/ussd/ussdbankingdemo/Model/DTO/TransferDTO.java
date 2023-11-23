@@ -1,4 +1,23 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Model.DTO;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class TransferDTO {
+    private String senderAccountNumber;
+    private BigDecimal amount;
+    private String receiverAccountNumber;
+    private String password;
+
+
+    // Constructors, getters, and setters
+    // You can generate these using your IDE or manually implement them
 }

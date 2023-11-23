@@ -5,8 +5,7 @@
  * 
  */
 package com.example.gebeya.ussd.ussdbankingdemo.Controller;
-import com.example.gebeya.ussd.ussdbankingdemo.exceptions.AccountNotFoundException;
-import com.example.gebeya.ussd.ussdbankingdemo.exceptions.handler.CustomExceptionHandler;
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.*;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.DepositDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.TransferDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.WithdrawDTO;
@@ -46,7 +45,7 @@ public class AccountController {
     }
 
     @GetMapping("/{accountNum}")
-    public ResponseEntity<?> getAccountByNum(@PathVariable int accountNum) {
+    public ResponseEntity<?> getAccountByNum(@PathVariable int accountNum) throws AccountNotFoundException {
         Account account = accountService.getAccountByNum(accountNum);
 
         if (account != null) {
@@ -57,7 +56,7 @@ public class AccountController {
     }
 
     @PostMapping("/customers/{cif}")
-    public ResponseEntity<?> createAccountForCustomer(@PathVariable int cif, @RequestBody Account account) {
+    public ResponseEntity<?> createAccountForCustomer(@PathVariable int cif, @RequestBody Account account) throws CustomerNotFoundException {
         Account savedAccount = accountService.saveAccountForCustomer(cif, account);
 
         if (savedAccount != null) {
@@ -86,7 +85,7 @@ public class AccountController {
                 } else {
                     return ResponseEntity.badRequest().body("'Password' doesn't match");
                 }
-            } else if (requestDTO.getCustomerAccountNumber() != 0  requestDTO.getOtp() != null && enteredPassword != null && enteredPassword.equals(storedPassword)) {
+            } else if (requestDTO.getCustomerAccountNumber() != 0 &&requestDTO.getOtp() != null && enteredPassword != null && enteredPassword.equals(storedPassword)) {
                 int customerAccountNumber = requestDTO.getCustomerAccountNumber();
                 Account customerAccount = accountService.getAccountByNum(customerAccountNumber);
                 String otp = requestDTO.getOtp();
@@ -99,11 +98,7 @@ public class AccountController {
        
         e.printStackTrace();  
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(e.getMessage());
-    } catch (javax.security.auth.login.AccountNotFoundException e) {
-     
-        e.printStackTrace();  
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(e.getMessage());
-    } catch (Exception e) {
+    } catch (Exception | InsufficientBalanceException e) {
      
         e.printStackTrace();  
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error: " + e.getMessage());
@@ -133,7 +128,7 @@ public class AccountController {
                 	return new ResponseEntity<>("Password Doesnt match", HttpStatus.BAD_REQUEST);}
 
 
-} else if (requestDTO.getCustomerAccountNumber() != 0  requestDTO.getOtp() != null&&password!=null&&password==mobileBankingUser.getPassword()) {
+} else if (requestDTO.getCustomerAccountNumber() != 0&&requestDTO.getOtp() != null&&password!=null&&password==mobileBankingUser.getPassword()) {
                 int customerAccountNumber = requestDTO.getCustomerAccountNumber();
                 Account customerAccount = accountService.getAccountByNum(customerAccountNumber);
                 String otp = requestDTO.getOtp();
@@ -146,18 +141,20 @@ public class AccountController {
 
             }
 
-        } catch (AccountNotFoundException | javax.security.auth.login.AccountNotFoundException e) {
+        } catch (AccountNotFoundException e) {
            
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
            
             return new ResponseEntity<>("Unexpected error at depositMoney endpoint ", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (InsufficientBalanceException e) {
+            throw new RuntimeException(e);
         }
 
         return new ResponseEntity<>("Invalid Withdraw request", HttpStatus.BAD_REQUEST);
     }
     @PostMapping("/customers/transfer")
-    public ResponseEntity<String> transferMoney(@RequestBody TransferDTO requestDTO) throws javax.security.auth.login.AccountNotFoundException {
+    public ResponseEntity<String> transferMoney(@RequestBody TransferDTO requestDTO) throws javax.security.auth.login.AccountNotFoundException, InsufficientBalanceException, AccountNotFoundException, MobileBankingUserNotFoundException {
 
         String senderAccount=requestDTO.getSenderAccountNumber();
         String receiverAccount=requestDTO.getReceiverAccountNumber();
