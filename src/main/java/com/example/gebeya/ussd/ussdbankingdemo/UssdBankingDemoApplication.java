@@ -6,6 +6,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+@OpenAPIDefinition(info = @Info(title = "Bank API",description = "Bank API Simulation By Group 2", version="1.2"))
+
 public class UssdBankingDemoApplication {
 
 	public static void main(String[] args) {

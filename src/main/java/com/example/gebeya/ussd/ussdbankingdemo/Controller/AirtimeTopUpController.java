@@ -1,4 +1,5 @@
 package com.example.gebeya.ussd.ussdbankingdemo.Controller;
+import com.example.gebeya.ussd.ussdbankingdemo.Exceptions.AccountNotFoundException;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Enum.AirtimeResponseDTO;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -27,7 +28,7 @@ public class AirtimeTopUpController {
     @Autowired
     private HistoryService historyService;
     @PostMapping("/airtime-top-up")
-    public ResponseEntity<?> airtimeTopUp(@RequestBody AirtimeTopUpDTO airtimeTopUpDTO) {
+    public ResponseEntity<?> airtimeTopUp(@RequestBody AirtimeTopUpDTO airtimeTopUpDTO) throws AccountNotFoundException {
         if (airtimeTopUpDTO.getAmount() == null || StringUtils.isBlank(airtimeTopUpDTO.getAccount())) {
             return new ResponseEntity<>("Invalid Inputs: amount is null or account is empty", HttpStatus.BAD_REQUEST);
         }
