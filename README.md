@@ -53,7 +53,7 @@ GET /api/v1.2/users/accounts/123456 HTTP/1.1
 Host: localhost:8080
 ```
 
-### 4. POST /api/v1.2/users/accounts/123456/deposit
+### 4. POST /api/v1.2/users/accounts/customers/deposit
 This endpoint is used to fetch a specific account by its number. It returns the account details for the given account number.
 
 Example:
@@ -62,7 +62,7 @@ GET /api/v1.2/users/accounts/123456 HTTP/1.1
 Host: localhost:8080
 ```
 
-### 5. POST /api/v1.2/users/accounts/123456/withdraw
+### 5. POST /api/v1.2/users/accounts/customers/withdraw
 This endpoint is used to fetch a specific account by its number. It returns the account details for the given account number.
 
 Example:
@@ -71,7 +71,7 @@ GET /api/v1.2/users/accounts/123456 HTTP/1.1
 Host: localhost:8080
 ```
 
-### 6. POST /api/v1.2/users/accounts/123456/transfer
+### 6. POST /api/v1.2/users/accounts/customers/transfer
 This endpoint is used to fetch a specific account by its number. It returns the account details for the given account number.
 
 Example:
@@ -80,7 +80,7 @@ GET /api/v1.2/users/accounts/123456 HTTP/1.1
 Host: localhost:8080
 ```
 
-### 7. DELETE /api/v1.2/users/accounts/{accountNum}
+### 7. DELETE /api/v1.2/users/accounts/customers/
 This endpoint is used to fetch a specific account by its number. It returns the account details for the given account number.
 
 Example:
