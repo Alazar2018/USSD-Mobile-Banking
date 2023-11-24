@@ -69,20 +69,28 @@ public class TransactionController {
        List<Transaction> transactions = transactionService.getByAccount(account);
        return new ResponseEntity<>(transactions, HttpStatus.OK);
    }
-   
+
     @GetMapping("/{accounts}/short-statements/{sizes}")
-    public ResponseEntity<List<Transaction>> getShortStatementsPageable(
+    public ResponseEntity<?> getShortStatementsPageable(
             @PathVariable String accounts,
             @PathVariable int sizes
     ) {
+        if(sizes<=0){
+
+            return new ResponseEntity<>(new ErrorResponse( "'Size' must be greater than zero: "), HttpStatus.BAD_REQUEST);
+
+        }
         try {
-            Account customerAccount=accountService.getAccountByNum(accounts);
+            Account customerAccount = accountService.getAccountByNum(accounts);
 
             Slice<Transaction> transactions = transactionService.getTopNTransactionsByAccount(customerAccount, sizes);
+
             List<Transaction> content = transactions.getContent(); // Extracting the content
             return new ResponseEntity<>(content, HttpStatus.OK);
         } catch (AccountNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ErrorResponse( "Account not found: " + accounts), HttpStatus.NOT_FOUND);
+        } catch (NoTransactionsFoundException e) {
+            return new ResponseEntity<>(new ErrorResponse("No transactions found for account: " + accounts), HttpStatus.NOT_FOUND);
         }
     }
 
