@@ -64,7 +64,7 @@ public class MobileBankingUserController {
  @GetMapping("/users/{account}")
  public ResponseEntity<?> getAccountByCif(@PathVariable String account) {
      try {
-         Account account1 = accountService.getAccountByNum(Integer.parseInt(account));
+         Account account1 = accountService.getAccountByNum(account);
          int cif = account1.getCustomer().getCif();
          MobileBankingUser retrievedUser = mobileBankingUserService.getMobileBankingUserDetailsForCustomer(cif);
          return ResponseEntity.ok(retrievedUser);

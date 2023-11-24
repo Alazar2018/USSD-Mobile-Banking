@@ -59,7 +59,7 @@ public class CustomerController {
 
     @GetMapping("/{accountnumber}/balance")
     public ResponseEntity<String> getAmount(@PathVariable int accountnumber) throws AccountNotFoundException {
-        Account account = accountService.getAccountByNum(accountnumber);
+        Account account = accountService.getAccountByNum(String.valueOf(accountnumber));
 
         if (account != null) {
             return ResponseEntity.ok("Your Balance is: " + account.getBalance());

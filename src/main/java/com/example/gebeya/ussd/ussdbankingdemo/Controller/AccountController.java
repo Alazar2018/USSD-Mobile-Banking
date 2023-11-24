@@ -11,15 +11,21 @@ import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.TransferDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.DTO.WithdrawDTO;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Account;
 import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.MobileBankingUser;
+import com.example.gebeya.ussd.ussdbankingdemo.Model.Entity.Transaction;
+import com.example.gebeya.ussd.ussdbankingdemo.Model.Enum.Status;
 import com.example.gebeya.ussd.ussdbankingdemo.Repository.CustomerRepository;
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.AccountService;
+import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.HistoryService;
 import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.MobileBankingUserService;
+import com.example.gebeya.ussd.ussdbankingdemo.Services.Interfaces.TransactionService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -29,9 +35,11 @@ public class AccountController {
     @Autowired
     private  AccountService accountService;
     @Autowired
-    private  CustomerRepository customerRepository;
+    private TransactionService transactionService;
     @Autowired
     private MobileBankingUserService mobileBankingUserService;
+    @Autowired
+    private HistoryService historyService;
 
     @GetMapping
     public ResponseEntity<List<Account>> getAllAccounts() {
@@ -46,7 +54,7 @@ public class AccountController {
 
     @GetMapping("/{accountNum}")
     public ResponseEntity<?> getAccountByNum(@PathVariable int accountNum) throws AccountNotFoundException {
-        Account account = accountService.getAccountByNum(accountNum);
+        Account account = accountService.getAccountByNum(String.valueOf(accountNum));
 
         if (account != null) {
             return ResponseEntity.ok(account);
@@ -85,12 +93,12 @@ public class AccountController {
                 } else {
                     return ResponseEntity.badRequest().body("'Password' doesn't match");
                 }
-            } else if (requestDTO.getCustomerAccountNumber() != 0 &&requestDTO.getOtp() != null && enteredPassword != null && enteredPassword.equals(storedPassword)) {
-                int customerAccountNumber = requestDTO.getCustomerAccountNumber();
-                Account customerAccount = accountService.getAccountByNum(customerAccountNumber);
+            } else if (requestDTO.getCustomerAccountNumber() != null &&requestDTO.getOtp() != null && enteredPassword != null && enteredPassword.equals(storedPassword)) {
+                int customerAccountNumber = Integer.parseInt(requestDTO.getCustomerAccountNumber());
+                Account customerAccount = accountService.getAccountByNum(String.valueOf(customerAccountNumber));
                 String otp = requestDTO.getOtp();
                 if(account.getAccountNum()!=customerAccount.getAccountNum()){
-                    String verifyDeposit = accountService.verifyDeposit(account.getAccountNum(), customerAccount.getAccountNum(), otp);
+                    String verifyDeposit = accountService.verifyDeposit(String.valueOf(account.getAccountNum()), String.valueOf(customerAccount.getAccountNum()), otp);
                     return new ResponseEntity<>(verifyDeposit, HttpStatus.OK);}
             }
 
@@ -122,18 +130,16 @@ public class AccountController {
                         return new ResponseEntity<>("'amount' must be a positive value", HttpStatus.BAD_REQUEST);
                     }
 
-                    String withdrawResult = accountService.withdrawMoney(Integer.parseInt(String.valueOf(requestDTO.getAccountNumber())), amount);
+                    String withdrawResult = accountService.withdrawMoney(String.valueOf(Integer.parseInt(String.valueOf(requestDTO.getAccountNumber()))), amount);
                     return new ResponseEntity<>(withdrawResult, HttpStatus.OK);
-                }else{
-                	return new ResponseEntity<>("Password Doesnt match", HttpStatus.BAD_REQUEST);}
+                }else{return new ResponseEntity<>("Password Doesnt match", HttpStatus.BAD_REQUEST);}
 
-
-} else if (requestDTO.getCustomerAccountNumber() != 0&&requestDTO.getOtp() != null&&password!=null&&password==mobileBankingUser.getPassword()) {
-                int customerAccountNumber = requestDTO.getCustomerAccountNumber();
-                Account customerAccount = accountService.getAccountByNum(customerAccountNumber);
+            } else if (requestDTO.getCustomerAccountNumber() != null || requestDTO.getOtp() != null&&password!=null&&password==mobileBankingUser.getPassword()) {
+                String customerAccountNumber = requestDTO.getCustomerAccountNumber();
+                Account customerAccount = accountService.getAccountByNum(String.valueOf(customerAccountNumber));
                 String otp = requestDTO.getOtp();
                 if(customerAccount.getAccountNum()!=account.getAccountNum()){
-                    String verifyDeposit = accountService.verifyWithdraw(account.getAccountNum(), customerAccount.getAccountNum(), otp);
+                    String verifyDeposit = accountService.verifyWithdraw(String.valueOf(account.getAccountNum()),customerAccountNumber,otp);
                     return new ResponseEntity<>(verifyDeposit, HttpStatus.OK);}
                 else{
                     return new ResponseEntity<>("Please insert different account number for merchant and customer", HttpStatus.NOT_ACCEPTABLE);
@@ -142,10 +148,13 @@ public class AccountController {
             }
 
         } catch (AccountNotFoundException e) {
-           
+            // Log the exception for debugging
+            // logger.error("Exception in depositMoney endpoint", e);
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-           
+            // Log other exceptions for debugging
+            e.printStackTrace();
+            //logger.error("Unexpected exception in depositMoney endpoint", e);
             return new ResponseEntity<>("Unexpected error at depositMoney endpoint ", HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (InsufficientBalanceException e) {
             throw new RuntimeException(e);
@@ -158,7 +167,7 @@ public class AccountController {
 
         String senderAccount=requestDTO.getSenderAccountNumber();
         String receiverAccount=requestDTO.getReceiverAccountNumber();
-        Account sender=accountService.getAccountByNum(Integer.parseInt(senderAccount));
+        Account sender=accountService.getAccountByNum(senderAccount);
         MobileBankingUser mobileBankingUser = mobileBankingUserService.getMobileBankingUserDetailsForCustomer(sender.getCustomer().getCif());
         String verfiypass=mobileBankingUser.getPassword();
         String password=requestDTO.getPassword();

@@ -54,9 +54,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account getAccountByNum(int accountNum) throws AccountNotFoundException {
+    public Account getAccountByNum(String accountNum) throws AccountNotFoundException {
         log.info("get account with account number: {}", accountNum);
-        return accountRepository.findById(accountNum).orElseThrow(() -> new AccountNotFoundException());
+        return accountRepository.findById(Integer.valueOf(accountNum)).orElseThrow(() -> new AccountNotFoundException());
     }
 
 
@@ -85,7 +85,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String depositMoney(String accountNumber, BigDecimal amount) throws AccountNotFoundException, MobileBankingUserNotFoundException {
+    public String depositMoney(String accountNumber, BigDecimal amount) throws AccountNotFoundException, MobileBankingUserNotFoundException, InsufficientBalanceException {
         log.info("deposit {} money to account {}", amount, accountNumber);
         Account account = accountRepository.findById(Integer.valueOf(accountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Account not found with account number: " + accountNumber));
@@ -93,6 +93,10 @@ public class AccountServiceImpl implements AccountService {
         boolean isMerchant = checkMerchantUser(account);
         boolean isUser = checkCustomerUser(account);
         if (isUser && account.getAccountStatus() != Status.INACTIVE) {
+            if (amount.compareTo(account.getBalance()) > 0) {
+                throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + account.getAccountNum());
+            }
+
             // Generate OTP
             String otp = generateOTP();
             // Set expiration time to 30 min from now
@@ -103,6 +107,10 @@ public class AccountServiceImpl implements AccountService {
             return "The Generated OTP is : " + otp + " This will also expire in : " + expireDate;
         }
         if (isMerchant && account.getAccountStatus() != Status.INACTIVE) {
+            if (amount.compareTo(account.getBalance()) > 0) {
+                throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + account.getAccountNum());
+            }
+
             BigDecimal newBalance = account.getBalance().add(amount);
             account.setBalance(newBalance);
             transactionService.merchantWithdrawTransaction(account, amount);
@@ -113,15 +121,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String verifyDeposit(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, InsufficientBalanceException, TransactionNotFoundException, MobileBankingUserNotFoundException {
+    public String verifyDeposit(String accountNumber, String customerAccountNumber, String OTP) throws AccountNotFoundException, InsufficientBalanceException, TransactionNotFoundException, MobileBankingUserNotFoundException {
         log.info("verifying deposit for account {}", accountNumber);
         // Implementation for verifyDeposit method
         // Find the merchant account
-        Account merchantAccount = accountRepository.findById(accountNumber)
+        Account merchantAccount = accountRepository.findById(Integer.valueOf(accountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Merchant account not found with account number: " + accountNumber));
 
         // Find the customer account by account number
-        Account customerAccount = accountRepository.findById(customerAccountNumber)
+        Account customerAccount = accountRepository.findById(Integer.valueOf(customerAccountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Customer account not found with account number: " + customerAccountNumber));
         boolean isCustomer=checkCustomerUser(customerAccount);
         boolean isMerchant=checkMerchantUser(merchantAccount);
@@ -177,21 +185,25 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public String verifyWithdraw(int accountNumber, int customerAccountNumber, String OTP) throws AccountNotFoundException, TransactionNotFoundException, InsufficientBalanceException, MobileBankingUserNotFoundException {
+    public String verifyWithdraw(String accountNumber, String customerAccountNumber, String OTP)
+            throws AccountNotFoundException, TransactionNotFoundException, InsufficientBalanceException,
+            MobileBankingUserNotFoundException {
         log.info("verifying withdraw for account {}", accountNumber);
+
         // Implementation for verifyWithdraw method
         // Find the merchant account
-        Account merchantAccount = accountRepository.findById(accountNumber)
+        Account merchantAccount = accountRepository.findById(Integer.valueOf(accountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Merchant account not found with account number: " + accountNumber));
 
         // Find the customer account by account number
-        Account customerAccount = accountRepository.findById(customerAccountNumber)
+        Account customerAccount = accountRepository.findById(Integer.valueOf(customerAccountNumber))
                 .orElseThrow(() -> new AccountNotFoundException("Customer account not found with account number: " + customerAccountNumber));
-        boolean isCustomer=checkCustomerUser(customerAccount);
-        boolean isMerchant=checkMerchantUser(merchantAccount);
-        if(isCustomer){
-            if(isMerchant){
 
+        boolean isCustomer = checkCustomerUser(customerAccount);
+        boolean isMerchant = checkMerchantUser(merchantAccount);
+
+        if (isCustomer) {
+            if (isMerchant) {
                 // Retrieve the transactions from the database based on the customer account
                 List<Transaction> transactions = transactionRepository.findByAccount(customerAccount);
 
@@ -205,16 +217,18 @@ public class AccountServiceImpl implements AccountService {
                             .orElseThrow(() -> new TransactionNotFoundException("Transaction not found with ID: " + checkDeposit.getRrn()));
                     // Check if OTP is correct and not expired
                     LocalDateTime currentDateTime = LocalDateTime.now();
-                    if (OTP.equals(currentTransaction.getOTP())&&currentDateTime.isBefore(currentTransaction.getOtpexpireddate())&&currentTransaction.getSide()==Status.WITHDRAW) {
+                    if (OTP.equals(currentTransaction.getOTP()) && currentDateTime.isBefore(currentTransaction.getOtpexpireddate())
+                            && currentTransaction.getSide() == Status.WITHDRAW) {
                         // Update customer account balance
-                        if (currentTransaction.getAmount().compareTo(customerAccount.getBalance()) > 0) {
-                            throw new com.example.gebeya.ussd.ussdbankingdemo.Exceptions.InsufficientBalanceException("Insufficient balance for withdrawal from account: " + customerAccountNumber);
-                        }else {
+                        if (currentTransaction.getAmount().compareTo(merchantAccount.getBalance()) > 0) {
+                            throw new InsufficientBalanceException(
+                                    "Insufficient balance for withdrawal from account: " + merchantAccount.getAccountNum());
+                        } else {
                             BigDecimal newBalance = customerAccount.getBalance().subtract(currentTransaction.getAmount());
                             BigDecimal merchantNewBalance = merchantAccount.getBalance().add(currentTransaction.getAmount());
                             customerAccount.setBalance(newBalance);
                             merchantAccount.setBalance(merchantNewBalance);
-                            Transaction merchantTransaction=new Transaction();
+                            Transaction merchantTransaction = new Transaction();
                             merchantTransaction.setAccount(merchantAccount);
                             merchantTransaction.setCustomerAccount(String.valueOf(customerAccount.getAccountNum()));
                             merchantTransaction.setAmount(currentTransaction.getAmount());
@@ -225,20 +239,25 @@ public class AccountServiceImpl implements AccountService {
                             currentTransaction.setOtpexpireddate(null);
                             historyService.saveHistoryForTransaction(currentTransaction);
                             transactionRepository.save(currentTransaction);
-                            return "Successfully withdrawn from : " + customerAccountNumber + "an amount of" + currentTransaction.getAmount() + " " + "New balance of Merchant:+ " + merchantNewBalance;
+                            return "Successfully withdrawn from : " + customerAccountNumber + " an amount of "
+                                    + currentTransaction.getAmount() + " " + "New balance of Merchant: " + merchantNewBalance;
                         }
                     }
                 }
-            }else{return "This is not a merchant user";}
-        }else{ return "Customer need to sign up to mobile banking user";}
-
+            } else {
+                return "This is not a merchant user";
+            }
+        } else {
+            return "Customer needs to sign up for mobile banking user";
+        }
 
         return "Withdraw from " + customerAccountNumber + " failed. Invalid OTP or expired.";
     }
 
+
     @Override
     @Transactional
-    public String withdrawMoney(int accountNumber, BigDecimal amount) throws AccountNotFoundException, InsufficientBalanceException, MobileBankingUserNotFoundException {
+    public String withdrawMoney(String accountNumber, BigDecimal amount) throws AccountNotFoundException, InsufficientBalanceException, MobileBankingUserNotFoundException {
         log.info("withdrawing money from account {}", accountNumber);
         // Implementation for withdrawMoney method
         Account account = accountRepository.findById(Integer.valueOf(accountNumber))
@@ -247,6 +266,10 @@ public class AccountServiceImpl implements AccountService {
         boolean isMerchant=checkMerchantUser(account);
         boolean isUSer=checkCustomerUser(account);
         if(isUSer&&account.getAccountStatus()!=Status.INACTIVE) {
+            if (amount.compareTo(account.getBalance()) > 0) {
+                throw new InsufficientBalanceException("Insufficient balance for withdrawal from account: " + account.getAccountNum());
+            }
+
             // Generate OTP
             String otp = generateOTP();
             // Set expiration time to 30 min from now
@@ -354,8 +377,8 @@ public class AccountServiceImpl implements AccountService {
             return false; // Account not found
         }
     }
-
-    private boolean checkCustomerUser(Account account) throws MobileBankingUserNotFoundException {
+    @Override
+    public boolean checkCustomerUser(Account account) throws MobileBankingUserNotFoundException {
         log.info("check customer user {}", account.getAccountNum());
         MobileBankingUser mobileBankingUser = mobileBankingUserService.getMobileBankingUserDetailsForCustomer(account.getCustomer().getCif());
         boolean isUser = false;
@@ -369,8 +392,8 @@ public class AccountServiceImpl implements AccountService {
 
         return isUser;
     }
-
-    private boolean checkMerchantUser(Account account) throws MobileBankingUserNotFoundException {
+    @Override
+    public boolean checkMerchantUser(Account account) throws MobileBankingUserNotFoundException {
         log.info("check merchant user for account {}", account.getAccountNum());
         MobileBankingUser mobileBankingUser = mobileBankingUserService.getMobileBankingUserDetailsForCustomer(account.getCustomer().getCif());
         boolean isUser = false;

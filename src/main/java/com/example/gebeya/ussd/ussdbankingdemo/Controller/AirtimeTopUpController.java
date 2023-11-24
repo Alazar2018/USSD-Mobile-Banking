@@ -33,7 +33,7 @@ public class AirtimeTopUpController {
             return new ResponseEntity<>("Invalid Inputs: amount is null or account is empty", HttpStatus.BAD_REQUEST);
         }
 
-        Account account = accountService.getAccountByNum(Integer.parseInt(airtimeTopUpDTO.getAccount()));
+        Account account = accountService.getAccountByNum(airtimeTopUpDTO.getAccount());
         BigDecimal amount = airtimeTopUpDTO.getAmount();
 
         if (account == null) {

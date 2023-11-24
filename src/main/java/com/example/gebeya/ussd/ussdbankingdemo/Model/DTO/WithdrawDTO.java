@@ -11,9 +11,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WithdrawDTO {
-    private int accountNumber;
+    private String accountNumber;
     private BigDecimal amount;
-    private int customerAccountNumber;
+    private String customerAccountNumber;
     private String otp;
     private String password;
 

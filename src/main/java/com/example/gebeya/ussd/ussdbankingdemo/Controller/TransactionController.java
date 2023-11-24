@@ -76,7 +76,7 @@ public class TransactionController {
             @PathVariable int sizes
     ) {
         try {
-            Account customerAccount=accountService.getAccountByNum(Integer.parseInt(accounts));
+            Account customerAccount=accountService.getAccountByNum(accounts);
 
             Slice<Transaction> transactions = transactionService.getTopNTransactionsByAccount(customerAccount, sizes);
             List<Transaction> content = transactions.getContent(); // Extracting the content
